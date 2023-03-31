@@ -4,7 +4,7 @@
 
 Name:           python-%{om_name}
 Version:        0.9.1
-Release:        1
+Release:        2
 Summary:        Flask extension for sending email
 Group:          Development/Python
 License:        BSD
