@@ -1,59 +1,71 @@
-# Created by pyp2rpm-3.3.5
-%global pypi_name Flask-Mail
-%global om_name flask-mail
+%define module flask-mail
+%define oname flask_mail
+%bcond doc 1
+%bcond tests 1
 
-Name:           python-%{om_name}
-Version:        0.9.1
-Release:        2
-Summary:        Flask extension for sending email
-Group:          Development/Python
-License:        BSD
-URL:            https://github.com/rduplain/flask-mail
-Source0:        %{pypi_name}-%{version}.tar.gz
+Name:		python-flask-mail
+Version:	0.10.0
+Release:	1
+Summary:	Flask extension for sending email
+Group:		Development/Python
+License:	BSD-3-Clause
+URL:		https://github.com/pallets-eco/flask-mail
+Source0:	%{URL}/archive/%{version}/%{name}-%{version}.tar.gz
+
+BuildSystem:	python
 BuildArch:      noarch
-
-BuildRequires:  python3-devel
-BuildRequires:  python3dist(blinker)
-BuildRequires:  python3dist(flask)
-BuildRequires:  python3dist(mock)
-BuildRequires:  python3dist(nose)
-BuildRequires:  python3dist(setuptools)
-BuildRequires:  python3dist(speaklater)
-BuildRequires:  python3dist(sphinx)
+BuildRequires:	pkgconfig(python3)
+BuildRequires:	python%{pyver}dist(flit-core)
+BuildRequires:	python%{pyver}dist(pip)
+BuildRequires:	python%{pyver}dist(setuptools)
+BuildRequires:	python%{pyver}dist(wheel)
+%if %{with doc}
+BuildRequires:  python%{pyver}dist(furo)
+BuildRequires:  python%{pyver}dist(myst-parser)
+BuildRequires:	python%{pyver}dist(sphinx)
+BuildRequires:	python%{pyver}dist(sphinxcontrib-log-cabinet)
+%endif
+%if %{with tests}
+BuildRequires:  python%{pyver}dist(pytest)
+BuildRequires:  python%{pyver}dist(flask)
+%endif
 
 %description
 Flask-Mail -A Flask extension for sending email messages.Please refer to the
 online documentation for details.Links * documentation <
-%package -n python-%{om_name}-doc
-Summary:        Flask-Mail documentation
-%description -n python-%{om_name}-doc
-Documentation for Flask-Mail
 
-%prep
-%autosetup -n %{pypi_name}-%{version}
-# Remove bundled egg-info
-rm -rf %{pypi_name}.egg-info
+%if %{with doc}
+%package doc
+Summary:	Documentation for %{name}
+%description doc
+Documentation for %{name}.
+%endif
 
-%build
-%py3_build
-# generate html docs
-PYTHONPATH=${PWD} sphinx-build docs html
-# remove the sphinx-build leftovers
-rm -rf html/.{doctrees,buildinfo}
+%if %{with doc}
+%install -a
+# Use sphinx-build to build html docs into buildroot docdir,
+# Doc generation requires the module to be installed in order to run successfully.
+PYTHONPATH="%{buildroot}%{python_sitelib}:${PWD}" \
+    sphinx-build -b html docs %{buildroot}%{_docdir}/%{name}-doc/html
+# remove .buildinfo and .doctrees
+rm -rf %{buildroot}%{_docdir}/%{name}-doc/html/{.buildinfo,.doctrees}
+%endif
 
-%install
-%py3_install
-
+%if %{with tests}
 %check
-%{__python3} setup.py test
+export CI=true
+export PYTHONPATH="%{buildroot}%{python_sitelib}:${PWD}"
+# Skip broken tests - https://github.com/pallets-eco/flask-mail/issues/233
+skiptests+="not test_unicode_sender and not test_unicode_sender_tuple"
+pytest -k "$skiptests"
+%endif
 
-%files -n python-%{om_name}
-%license docs/_themes/LICENSE LICENSE
-%doc README.rst
-%{python3_sitelib}/__pycache__/*
-%{python3_sitelib}/flask_mail.py
-%{python3_sitelib}/Flask_Mail-%{version}-py%{python3_version}.egg-info
+%files
+%{python3_sitelib}/%{oname}
+%{python3_sitelib}/%{oname}-%{version}.dist-info
 
-%files -n python-%{om_name}-doc
-%doc html
-%license docs/_themes/LICENSE LICENSE
+%if %{with doc}
+%files doc
+%doc docs/_build/html CHANGES.md README.md
+%license LICENSE.txt
+%endif
