@@ -1,11 +1,11 @@
 %define module flask-mail
 %define oname flask_mail
-%bcond doc 1
+%bcond doc 0
 %bcond tests 1
 
 Name:		python-flask-mail
 Version:	0.10.0
-Release:	1
+Release:	2
 Summary:	Flask extension for sending email
 Group:		Development/Python
 License:	BSD-3-Clause
